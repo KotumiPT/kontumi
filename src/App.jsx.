@@ -1,0 +1,112 @@
+
+import { useState } from 'react';
+
+const initialTransactions = [
+  { name: 'Supermercado', category: 'Alimentação', amount: -86.40, date: 'Hoje', icon: '🛒' },
+  { name: 'Salário', category: 'Rendimento', amount: 1450, date: 'Hoje', icon: '💰' },
+  { name: 'Combustível', category: 'Transportes', amount: -55, date: 'Ontem', icon: '🚗' },
+  { name: 'Restaurante', category: 'Lazer', amount: -32.50, date: 'Ontem', icon: '🍽️' }
+];
+
+export default function App() {
+  const [transactions, setTransactions] = useState(initialTransactions);
+  const [showForm, setShowForm] = useState(false);
+  const [name, setName] = useState('');
+  const [amount, setAmount] = useState('');
+  const [tab, setTab] = useState('Início');
+
+  const income = transactions
+    .filter(t => t.amount > 0)
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const expenses = transactions
+    .filter(t => t.amount < 0)
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+  const balance = income - expenses;
+
+  function addTransaction(e) {
+    e.preventDefault();
+    if (!name || !amount || Number(amount) <= 0) return;
+
+    setTransactions([
+      { name, category: 'Outros', amount: -Number(amount), date: 'Hoje', icon: '💳' },
+      ...transactions
+    ]);
+    setName('');
+    setAmount('');
+    setShowForm(false);
+  }
+
+  return (
+    <div className="app">
+      <header className="topbar">
+        <div>
+          <div className="brand">KONTUMI<span>.</span></div>
+          <p>As tuas finanças, com mais controlo.</p>
+        </div>
+        <div className="avatar">K</div>
+      </header>
+
+      <main>
+        <section className="welcome">
+          <span>O TEU RESUMO FINANCEIRO</span>
+          <h1>Olá! 👋</h1>
+          <p>Vamos cuidar bem do teu dinheiro?</p>
+        </section>
+
+        <section className="balance-card">
+          <span>Saldo disponível</span>
+          <h2>{balance.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })}</h2>
+          <div className="balance-footer">
+            <div><span>↑ Receitas</span><strong>{income.toFixed(2)} €</strong></div>
+            <div><span>↓ Despesas</span><strong>{expenses.toFixed(2)} €</strong></div>
+          </div>
+        </section>
+
+        <section className="quick-actions">
+          <button onClick={() => setShowForm(true)}>＋ Nova despesa</button>
+          <button className="secondary" onClick={() => setTab('Orçamento')}>◷ Orçamento</button>
+        </section>
+
+        {showForm && (
+          <form className="form-card" onSubmit={addTransaction}>
+            <h3>Nova despesa</h3>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Descrição da despesa" required />
+            <input value={amount} onChange={e => setAmount(e.target.value)} type="number" min="0.01" step="0.01" placeholder="Valor em euros" required />
+            <div className="form-actions">
+              <button type="submit">Guardar</button>
+              <button type="button" className="secondary" onClick={() => setShowForm(false)}>Cancelar</button>
+            </div>
+          </form>
+        )}
+
+        <section className="section-heading">
+          <div><span>ACOMPANHAMENTO</span><h3>Movimentos recentes</h3></div>
+          <span className="month">Este mês</span>
+        </section>
+
+        <section className="transactions">
+          {transactions.map((t, i) => (
+            <article className="transaction" key={i}>
+              <div className="transaction-icon">{t.icon}</div>
+              <div className="transaction-info"><strong>{t.name}</strong><span>{t.category} · {t.date}</span></div>
+              <strong className={t.amount > 0 ? 'positive' : 'negative'}>
+                {t.amount > 0 ? '+' : ''}{t.amount.toFixed(2)} €
+              </strong>
+            </article>
+          ))}
+        </section>
+      </main>
+
+      <nav className="bottom-nav">
+        {['Início', 'Movimentos', 'Orçamento', 'Perfil'].map(item => (
+          <button className={tab === item ? 'active' : ''} key={item} onClick={() => setTab(item)}>
+            {item === 'Início' ? '⌂' : item === 'Movimentos' ? '⇄' : item === 'Orçamento' ? '▤' : '○'}
+            <span>{item}</span>
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
+}
